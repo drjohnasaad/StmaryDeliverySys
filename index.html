@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St Mary Pharmacy Delivery System</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+        }
+
+        label, select, input {
+            display: block;
+            margin: 10px auto;
+        }
+
+        select, input {
+            padding: 5px;
+        }
+
+        #photoInput {
+            display: none; /* Hide the photo input initially */
+        }
+
+        button {
+            background-color: purple;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>St Mary Pharmacy Delivery System</h1>
+
+    <form id="deliveryForm">
+        <label for="rxNumber">Rx Number:</label>
+        <input type="text" id="rxNumber" name="rxNumber">
+
+        <label for="deliveryMethod">How Delivered:</label>
+        <select id="deliveryMethod" name="deliveryMethod" onchange="showPhotoInput()">
+            <option value="inHand">In Hand</option>
+            <option value="atDoor">At the Door</option>
+            <option value="behindShield">Behind the Shield Door</option>
+            <option value="inMailbox">In the Mailbox</option>
+        </select>
+
+        <!-- Photo input -->
+        <input type="file" accept="image/*" id="photoInput">
+
+        <!-- Display the selected photo -->
+        <img id="selectedPhoto" alt="Selected Photo" style="display: none; max-width: 300px; margin-top: 10px;">
+
+        <!-- Button to send message via Telegram bot -->
+        <button type="button" onclick="sendMessage()">Send Message</button>
+    </form>
+
+    <script>
+        // Function to show/hide photo input based on selected delivery method
+        function showPhotoInput() {
+            const deliveryMethod = document.getElementById("deliveryMethod").value;
+            const photoInput = document.getElementById("photoInput");
+            const selectedPhoto = document.getElementById("selectedPhoto");
+
+            // Show photo input only if the delivery method is not "inHand"
+            photoInput.style.display = (deliveryMethod !== "inHand") ? "block" : "none";
+            selectedPhoto.style.display = "none"; // Hide the selected photo if the delivery method changes
+        }
+
+        // Function to display the selected photo
+        function displaySelectedPhoto() {
+            const photoInput = document.getElementById("photoInput");
+            const selectedPhoto = document.getElementById("selectedPhoto");
+
+            // Display the selected photo
+            const file = photoInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                selectedPhoto.src = e.target.result;
+                selectedPhoto.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Function to get current location
+        function getCurrentLocation() {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+
+                    // Use the latitude and longitude as needed (you may need to implement this)
+                    console.log(`Latitude: ${latitude}, Longitude: ${longitude}`);
+                },
+                (error) => {
+                    console.error('Error getting location:', error);
+                    alert('Failed to get current location.');
+                }
+            );
+        }
+
+        // Function to send message via Telegram bot
+        function sendMessage() {
+            const rxNumber = document.getElementById("rxNumber").value;
+            const deliveryMethod = document.getElementById("deliveryMethod").value;
+            const selectedPhoto = document.getElementById("photoInput").files[0];
+
+            getCurrentLocation(); // Fetch current location
+
+            const currentDate = new Date();
+            const formattedDate = `${currentDate.getMonth() + 1}/${currentDate.getDate()}/${currentDate.getFullYear()}`;
+            const formattedTime = `${currentDate.getHours()}:${currentDate.getMinutes()}`;
+
+            // Construct the message
+            const message = `Rx: ${rxNumber}\nHow Delivered: ${deliveryMethod}\nDate & Time: ${formattedDate} on ${formattedTime}`;
+
+            // You would typically send this message to your Telegram bot (you need to implement this)
+            sendTelegramMessage(message, selectedPhoto);
+        }
+
+        // Function to send message and photo to Telegram bot using fetch API
+        function sendTelegramMessage(message, photo) {
+            const botToken = "6728550531:AAGYvCa4oJIQuL6cWk4uaXev2UhCF1Wjz2M";
+            const chatId = "-1002096273326";
+
+            const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+
+            const formData = new FormData();
+            formData.append("chat_id", chatId);
+            formData.append("caption", message);
+            formData.append("photo", photo);
+
+            // Use the fetch API to send the message and photo
+            fetch(telegramApiUrl, { method: "POST", body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Telegram API response:", data);
+                    alert('Message sent via Telegram bot!');
+                })
+                .catch(error => {
+                    console.error('Error sending message:', error);
+                    alert('Failed to send message to Telegram bot.');
+                });
+        }
+    </script>
+
+</body>
+</html>
